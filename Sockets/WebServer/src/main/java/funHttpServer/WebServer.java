@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.Map;
 import java.util.LinkedHashMap;
 import java.nio.charset.Charset;
@@ -62,7 +66,8 @@ class WebServer {
           server.close();
         } catch (IOException e) {
           // TODO Auto-generated catch block
-          e.printStackTrace();
+        	System.out.println("Socket is not open");
+        	e.printStackTrace();
         }
       }
     }
@@ -206,6 +211,16 @@ class WebServer {
           Integer num2 = Integer.parseInt(query_pairs.get("num2"));
 
           // do math
+          try {
+        	  if(num1 == null)
+        	  {
+        		  num1 = 1;
+        	  }
+        	  if(num2 == null)
+        	  {
+        		  num2 = 1;
+        	  }
+        	  
           Integer result = num1 * num2;
 
           // Generate response
@@ -213,9 +228,15 @@ class WebServer {
           builder.append("Content-Type: text/html; charset=utf-8\n");
           builder.append("\n");
           builder.append("Result is: " + result);
+          }
 
           // TODO: Include error handling here with a correct error code and
           // a response that makes sense
+          catch(IllegalArgumentException e) 
+          {
+        	  System.out.println("ERROR 400: Bad Request");
+        	  System.out.println("Invalid input, an integer is needed");
+          }
 
         } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
@@ -238,8 +259,25 @@ class WebServer {
           // amehlhase, 46384989 -> memoranda
           // amehlhase, 46384989 -> ser316examples
           // amehlhase, 46384989 -> test316
+          
+          String user = "user";
+          json = fetchURL("https://api.github.com/users/" + user + "/repos"); 
+          JSONArray repoArray = new JSONArray(json);
+          JSONArray newjSON = new JSONArray();
+          
+          for(int i=0; i<repoArray.length(); i++){
+             JSONObject repo = repoArray.getJSONObject(i);
+             String repoName = repo.getString("name");
+             JSONObject owner = repo.getJSONObject("owner");
+             String ownername = owner.getString("login");
+             JSONObject newRepo = new JSONObject();
+             newRepo.put("name",repoName);
+             newRepo.put("owner",ownername);
+             newRepo.put("user", user);
+             
+             newjSON.put(newRepo);
 
-        } else {
+        }} else {
           // if the request is not recognized at all
 
           builder.append("HTTP/1.1 400 Bad Request\n");
